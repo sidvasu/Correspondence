@@ -13,8 +13,10 @@
 
     <main>
         <a href="index.html">Login</a>
-        
-        <form class="login-form" method="post" action="/register">
+
+        <p class="error" id="register-error"></p>
+
+        <form>
             <div class="login-box">
                 <label for="register-username">Username</label>
                 <input type="text" id="register-username" placeholder="Username" required>
@@ -22,9 +24,11 @@
                 <label for="register-password">Password</label>
                 <input type="password" id="register-password" placeholder="Password" required>
 
-                <input type="submit" value="Register">
+                <button type="button" id="register"">Register</button>
             </div>
         </form>
     </main>
+
+    <script src="js/register.js"></script>
 </body>
 </html>
