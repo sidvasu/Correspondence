@@ -19,5 +19,5 @@ document.getElementById("register").onclick = async function () {
 function showError(msg) {
     const el = document.getElementById('register-error');
     el.textContent = msg;
-    el.style.display = 'block';
+    el.style.visibility = 'visible';
 }
