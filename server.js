@@ -1,11 +1,12 @@
 import express from "express";
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import { MongoClient, ObjectId } from "mongodb";
-import mongoose from "mongoose";
+import { MongoClient, ObjectId, GridFSBucket } from "mongodb";
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import env from "dotenv";
+import multer from "multer";
+import { Readable } from "stream";
 
 const app = express();
 const port = 3000;
@@ -15,27 +16,30 @@ const __dirname = dirname(__filename);
 
 app.use(express.static(join(__dirname, 'public')));
 app.use(express.json());
+app.use('/uploads', express.static('uploads'));
 
 const MONGO_URL = "mongodb://localhost:27017"
 const DB_NAME = "cpsc431_vasusiddharth";
 let db;
+let bucket
 
+env.config()
 const JWT_SECRET = process.env.JWT_SECRET || 'cpsc431-final-project-development-secret-key';
 
 MongoClient.connect(MONGO_URL)
     .then(client => {
         db = client.db(DB_NAME);
         console.log('Connected to MongoDB');
-        app.listen(3000, () => console.log('Server running at http://localhost:3000'));
+        bucket = new GridFSBucket(db, { bucketName: 'uploads' })
+        app.listen(port, () => console.log('Server running at http://localhost:3000'));
     })
     .catch(err => console.error('MongoDB connection failed:', err));
 
-function files() {
-    return db.collection('files');
-}
+const storage = multer.memoryStorage();
+const upload = multer({storage});
 
 function users() { 
-    return db.collection('users'); 
+  return db.collection('users'); 
 }
 
 const AUTH_COOKIE_NAME = 'authToken';
@@ -112,8 +116,49 @@ app.get("/", (req, res) => {
   res.sendFile(join(__dirname, "public", "index.html"));
 });
 
-app.get('/share.html', authenticateToken, (req, res) => {
+app.get('/share.html', authenticateToken, async (req, res) => {
   res.sendFile(join(__dirname, 'public', 'share.html'));
+});
+
+app.get('/files', authenticateToken, async (req, res) => {
+  try {
+    const files = await db
+      .collection('uploads.files')
+      .find({})
+      .sort({ uploadDate: -1 })
+      .toArray();
+
+    const formatted = files.map(file => ({
+      id: file._id,
+      filename: file.filename,
+      owner: file.metadata.uploadedBy,
+      ownedByCurrentUser: file.metadata?.uploadedBy === req.user.username,
+      length: file.length,
+      uploadDate: file.uploadDate,
+      contentType: file.contentType
+    }));
+
+    res.json(formatted);
+
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      error: 'Failed to fetch files'
+    });
+  }
+});
+
+app.get("/upload/:fileId", authenticateToken, (req, res) => {
+  let {fileId} = req.params;
+
+  let downloadStream = bucket.openDownloadStream(new ObjectId(fileId));
+
+  downloadStream.on("file", (file) => {
+    res.set("Content-Type", file.contentType);
+  });
+
+  downloadStream.pipe(res);
 });
 
 app.post("/register", async (req, res) => {
@@ -157,7 +202,8 @@ app.post("/login", async (req, res) => {
       );
     }
 
-    const token = jwt.sign({
+    const token = jwt.sign(
+      {
         sub: String(user._id),
         username: user.username
       },
@@ -180,3 +226,105 @@ app.post('/logout', (req, res) => {
   res.json({ message: 'Logged out' });
 });
 
+app.post('/upload', authenticateToken, upload.single("file"), async (req, res) => {
+  try {
+    const { originalname, mimetype, buffer } = req.file;
+
+    const uploadStream = bucket.openUploadStream(originalname, 
+      { contentType: mimetype,
+        metadata: {
+          uploadedBy: req.user.username
+        }
+      }
+    );
+
+    const readBuffer = new Readable();
+    readBuffer.push(buffer);
+    readBuffer.push(null);
+
+    readBuffer
+      .pipe(uploadStream)
+      .on("error", (err) => {
+        console.error(err);
+
+        res.status(500).json({
+          error: "Upload failed"
+        });
+      })
+      .on("finish", async () => {
+        try {
+            const uploadedFile = await db
+              .collection('uploads.files')
+              .findOne({
+                _id: uploadStream.id
+              });
+
+            res.json({
+              message: "Upload successful",
+              file: {
+                id: uploadedFile._id,
+                filename: uploadedFile.filename,
+                owner: uploadedFile.metadata.uploadedBy,
+                ownedByCurrentUser: true,
+                contentType: uploadedFile.contentType,
+                uploadDate: uploadedFile.uploadDate
+              }
+            });
+
+          } catch (error) {
+
+            console.error(error);
+
+            res.status(500).json({
+              error: "Failed to fetch uploaded file metadata"
+            });
+
+          }
+
+        });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      error: "Upload failed"
+    });
+  }
+});
+
+app.delete('/files/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const fileId = new ObjectId(id);
+
+    const file = await db
+      .collection('uploads.files')
+      .findOne({ _id: fileId });
+
+    if (!file) {
+      return res.status(404).json({
+        error: 'File not found'
+      });
+    }
+
+    if (file.metadata.uploadedBy !== req.user.username) {
+      return res.status(403).json({
+        error: 'Not authorized'
+      });
+    }
+
+    await bucket.delete(fileId);
+
+    res.json({
+      message: 'File deleted successfully'
+    });
+
+  } catch (error) {
+
+    console.error(error);
+
+    res.status(500).json({
+      error: 'Failed to delete file'
+    });
+
+  }
+});
