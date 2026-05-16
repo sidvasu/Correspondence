@@ -8,15 +8,12 @@ function addCard(file) {
         card.innerHTML = `
             <p>${file.owner}</p>
             <a target=" " href="/upload/${file.id}" class="file-link">${file.filename}</a>
-            <input class="rename-input" type="text" value="${file.filename}" style="display:none;" />
             <button class="rename-btn">✏️</button>
-            <button class="confirm-rename-btn" style="display:none;">✅</button>
-            <button class="cancel-rename-btn" style="display:none;">❌</button>
             <button class="delete-btn">🗑️</button>
         `;
     } else {
         card.innerHTML = `
-            <p>${file.owner}</p>
+            <p style="margin-bottom: 0px">${file.owner}</p>
             <a target=" " href="/upload/${file.id}" class="file-link">${file.filename}</a>
         `;
     }
@@ -38,29 +35,22 @@ function addCard(file) {
     }
 
     const renameBtn = card.querySelector(".rename-btn");
-
     if (renameBtn) {
-
         renameBtn.addEventListener("click", async () => {
-
             const newName = prompt(
                 "Enter new filename:",
                 file.filename
             );
-
             if (!newName) {
                 return;
             }
-
             const res = await fetch(
                 `/files/${file.id}`,
                 {
                     method: "PATCH",
-
                     headers: {
                         "Content-Type": "application/json"
                     },
-
                     body: JSON.stringify({
                         filename: newName
                     })
@@ -68,19 +58,11 @@ function addCard(file) {
             );
 
             const data = await res.json();
-
             if (res.ok) {
-
-                const fileLink =
-                    card.querySelector(".file-link");
-
-                fileLink.textContent =
-                    data.filename;
-
+                const fileLink = card.querySelector(".file-link");
+                fileLink.textContent = data.filename;
             } else {
-
                 alert(data.error);
-
             }
         });
     }
