@@ -7,41 +7,75 @@ function addCard(file) {
     if (file.ownedByCurrentUser) {
         card.innerHTML = `
             <p>${file.owner}</p>
-            <a target=" " href="/upload/${file.id}">
-                ${file.filename}
-            </a>
-
+            <a target=" " href="/upload/${file.id}" class="file-link">${file.filename}</a>
+            <input class="rename-input" type="text" value="${file.filename}" style="display:none;" />
+            <button class="rename-btn">✏️</button>
+            <button class="confirm-rename-btn" style="display:none;">✅</button>
+            <button class="cancel-rename-btn" style="display:none;">❌</button>
             <button class="delete-btn">🗑️</button>
         `;
-    }
-    else {
+    } else {
         card.innerHTML = `
             <p>${file.owner}</p>
-            <a target=" " href="/upload/${file.id}">
-                ${file.filename}
-            </a>
+            <a target=" " href="/upload/${file.id}" class="file-link">${file.filename}</a>
         `;
     }
 
     fileList.appendChild(card);
 
     const deleteBtn = card.querySelector(".delete-btn");
-
     if (deleteBtn) {
-
         deleteBtn.addEventListener("click", async () => {
-
             const fileId = card.dataset.id;
+            const res = await fetch(`/files/${fileId}`, { method: "DELETE" });
+            const data = await res.json();
+            if (res.ok) {
+                card.remove();
+            } else {
+                alert(data.error);
+            }
+        });
+    }
 
-            const res = await fetch(`/files/${fileId}`, {
-                method: "DELETE"
-            });
+    const renameBtn = card.querySelector(".rename-btn");
+
+    if (renameBtn) {
+
+        renameBtn.addEventListener("click", async () => {
+
+            const newName = prompt(
+                "Enter new filename:",
+                file.filename
+            );
+
+            if (!newName) {
+                return;
+            }
+
+            const res = await fetch(
+                `/files/${file.id}`,
+                {
+                    method: "PATCH",
+
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        filename: newName
+                    })
+                }
+            );
 
             const data = await res.json();
 
             if (res.ok) {
 
-                card.remove();
+                const fileLink =
+                    card.querySelector(".file-link");
+
+                fileLink.textContent =
+                    data.filename;
 
             } else {
 
@@ -55,10 +89,7 @@ function addCard(file) {
 async function loadFiles() {
     const res = await fetch('/files');
     const files = await res.json();
-
-    files.forEach(file => {
-        addCard(file);
-    });
+    files.forEach(file => addCard(file));
 }
 
 loadFiles();
@@ -77,7 +108,6 @@ document.getElementById("uploadBtn").addEventListener("click", async () => {
     }
 
     const formData = new FormData();
-
     formData.append("file", fileInput.files[0]);
 
     const res = await fetch("/upload", {

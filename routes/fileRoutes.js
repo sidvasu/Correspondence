@@ -131,4 +131,36 @@ router.delete("/files/:id", authenticateToken, async (req, res) => {
   }
 });
 
+router.patch("/files/:id", authenticateToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { filename } = req.body;
+        const fileId = new ObjectId(id);
+        const db = getDB();
+
+        if (!filename) {
+            return res.status(400).json({ error: "Filename cannot be empty" });
+        }
+
+        const file = await db.collection("uploads.files").findOne({ _id: fileId });
+
+        if (!file) {
+            return res.status(404).json({ error: "File not found" });
+        }
+
+        if (file.metadata.uploadedBy !== req.user.username) {
+            return res.status(403).json({ error: "Not authorized" });
+        }
+
+        await db.collection("uploads.files").updateOne(
+            { _id: fileId }, { $set: { 'filename': filename } } 
+        );
+
+        res.json({ message: "File renamed successfully", filename });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Failed to delete file" });
+    }
+});
+
 export default router;
