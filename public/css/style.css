@@ -97,3 +97,8 @@ label {
     height: 50%;
     margin: 0px;
 }
+
+.rename-btn,.delete-btn {
+    background-color: transparent;
+    border: 0px;
+}
