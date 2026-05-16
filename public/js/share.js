@@ -1,4 +1,3 @@
-// Adds a file card on the share page
 function addCard(file) {
     const fileList = document.getElementById("file-list");
     const card = document.createElement("div");
@@ -9,22 +8,18 @@ function addCard(file) {
         card.innerHTML = `
             <p>${file.owner}</p>
             <a target=" " href="/upload/${file.id}" class="file-link">${file.filename}</a>
-            <input class="rename-input" type="text" value="${file.filename}" style="display:none;" />
             <button class="rename-btn">✏️</button>
-            <button class="confirm-rename-btn" style="display:none;">✅</button>
-            <button class="cancel-rename-btn" style="display:none;">❌</button>
             <button class="delete-btn">🗑️</button>
         `;
     } else {
         card.innerHTML = `
-            <p>${file.owner}</p>
+            <p style="margin-bottom: 0px">${file.owner}</p>
             <a target=" " href="/upload/${file.id}" class="file-link">${file.filename}</a>
         `;
     }
 
     fileList.appendChild(card);
 
-    // Delete button logic
     const deleteBtn = card.querySelector(".delete-btn");
     if (deleteBtn) {
         deleteBtn.addEventListener("click", async () => {
@@ -32,7 +27,6 @@ function addCard(file) {
             const res = await fetch(`/files/${fileId}`, { method: "DELETE" });
             const data = await res.json();
             if (res.ok) {
-                allFiles = allFiles.filter(f => String(f.id) !== fileId);
                 card.remove();
             } else {
                 alert(data.error);
@@ -40,68 +34,36 @@ function addCard(file) {
         });
     }
 
-    // Rename button logic
     const renameBtn = card.querySelector(".rename-btn");
     if (renameBtn) {
-        const fileLink = card.querySelector(".file-link");
-        const renameInput = card.querySelector(".rename-input");
-        const confirmBtn = card.querySelector(".confirm-rename-btn");
-        const cancelBtn = card.querySelector(".cancel-rename-btn");
-
-        const enterEditMode = () => {
-            renameInput.value = fileLink.textContent.trim();
-            fileLink.style.display = "none";
-            renameInput.style.display = "inline";
-            renameBtn.style.display = "none";
-            confirmBtn.style.display = "inline";
-            cancelBtn.style.display = "inline";
-            renameInput.focus();
-        };
-
-        const exitEditMode = () => {
-            fileLink.style.display = "inline";
-            renameInput.style.display = "none";
-            renameBtn.style.display = "inline";
-            confirmBtn.style.display = "none";
-            cancelBtn.style.display = "none";
-        };
-
-        const submitRename = async () => {
-            const newName = renameInput.value.trim();
+        renameBtn.addEventListener("click", async () => {
+            const newName = prompt(
+                "Enter new filename:",
+                file.filename
+            );
             if (!newName) {
-                alert("Filename cannot be empty.");
                 return;
             }
-            if (newName === fileLink.textContent.trim()) {
-                exitEditMode();
-                return;
-            }
+            const res = await fetch(
+                `/files/${file.id}`,
+                {
+                    method: "PATCH",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        filename: newName
+                    })
+                }
+            );
 
-            const fileId = card.dataset.id;
-            const res = await fetch(`/files/${fileId}/rename`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ filename: newName })
-            });
             const data = await res.json();
-
             if (res.ok) {
-                fileLink.textContent = newName;
-                const fileId = card.dataset.id;
-                const entry = allFiles.find(f => String(f.id) === fileId);
-                if (entry) entry.filename = newName;
-                exitEditMode();
+                const fileLink = card.querySelector(".file-link");
+                fileLink.textContent = data.filename;
             } else {
                 alert(data.error);
             }
-        };
-
-        renameBtn.addEventListener("click", enterEditMode);
-        cancelBtn.addEventListener("click", exitEditMode);
-        confirmBtn.addEventListener("click", submitRename);
-        renameInput.addEventListener("keydown", (e) => {
-            if (e.key === "Enter") submitRename();
-            if (e.key === "Escape") exitEditMode();
         });
     }
 }
@@ -139,6 +101,8 @@ function updateFilterBtn() {
 // Displays files on page load
 async function loadFiles() {
     const res = await fetch('/files');
+    const files = await res.json();
+    files.forEach(file => addCard(file));
     allFiles = await res.json();
     renderFiles();
 }
@@ -159,13 +123,11 @@ updateSortBtn();
 updateFilterBtn();
 loadFiles();
 
-// Logout button functionality
 document.getElementById("logout").onclick = async function () {
     await fetch('/logout', { method: 'POST' });
     window.location.href = '../index.html';
 };
 
-// Upload button functionality
 document.getElementById("uploadBtn").addEventListener("click", async () => {
     const fileInput = document.getElementById("fileInput");
 
@@ -186,8 +148,7 @@ document.getElementById("uploadBtn").addEventListener("click", async () => {
 
     if (res.ok) {
         console.log("Upload successful");
-        allFiles.push(data.file);
-        renderFiles();
+        addCard(data.file);
     } else {
         alert(data.error);
     }
