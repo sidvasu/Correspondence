@@ -1,3 +1,4 @@
+// Login button functionality
 document.getElementById("login").onclick = async function () {
     const res = await fetch('/login', {
         method: 'POST',
@@ -16,6 +17,7 @@ document.getElementById("login").onclick = async function () {
     }
 };
 
+// Displays error on screen
 function showError(msg) {
     const el = document.getElementById('login-error');
     el.textContent = msg;

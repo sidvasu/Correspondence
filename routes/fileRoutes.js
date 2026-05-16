@@ -15,10 +15,12 @@ const router = Router();
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
+// Loads the share page
 router.get("/share.html", authenticateToken, (req, res) => {
   res.sendFile(join(__dirname, "../public", "share.html"));
 });
 
+// Gets the files from the database
 router.get("/files", authenticateToken, async (req, res) => {
   try {
     const db = getDB();
@@ -45,6 +47,7 @@ router.get("/files", authenticateToken, async (req, res) => {
   }
 });
 
+// Displays a specific file to the user
 router.get("/upload/:fileId", authenticateToken, (req, res) => {
   const { fileId } = req.params;
   const bucket = getBucket();
@@ -57,6 +60,7 @@ router.get("/upload/:fileId", authenticateToken, (req, res) => {
   downloadStream.pipe(res);
 });
 
+// Uploads a file to the database
 router.post("/upload", authenticateToken, upload.single("file"), async (req, res) => {
   try {
     const { originalname, mimetype, buffer } = req.file;
@@ -106,6 +110,7 @@ router.post("/upload", authenticateToken, upload.single("file"), async (req, res
   }
 });
 
+// Deletes a file from the database
 router.delete("/files/:id", authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
@@ -131,6 +136,7 @@ router.delete("/files/:id", authenticateToken, async (req, res) => {
   }
 });
 
+// Renames a file
 router.patch("/files/:id", authenticateToken, async (req, res) => {
     try {
         const { id } = req.params;

@@ -1,3 +1,4 @@
+// Register button functionality
 document.getElementById("register").onclick = async function () {
     const res = await fetch('/register', {
         method: 'POST',
@@ -16,6 +17,7 @@ document.getElementById("register").onclick = async function () {
     }
 };
 
+// Displays error on screen
 function showError(msg) {
     const el = document.getElementById('register-error');
     el.textContent = msg;

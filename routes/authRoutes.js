@@ -11,6 +11,7 @@ import {
 
 const router = Router();
 
+// Endpoint for registering an account
 router.post("/register", async (req, res) => {
   try {
     let { username, password } = req.body;
@@ -31,6 +32,7 @@ router.post("/register", async (req, res) => {
   }
 });
 
+// Endpoint for logging in
 router.post("/login", async (req, res) => {
   try {
     let { username, password } = req.body;
@@ -59,6 +61,7 @@ router.post("/login", async (req, res) => {
   }
 });
 
+// Endpoint for logging out
 router.post("/logout", (req, res) => {
   clearAuthCookie(res);
   res.json({ message: "Logged out" });
