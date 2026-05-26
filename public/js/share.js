@@ -1,3 +1,8 @@
+let allFiles = [];
+let sortOrder = 'asc';
+let showMyFilesOnly = false;
+
+// Adds a file card
 function addCard(file) {
     const fileList = document.getElementById("file-list");
     const card = document.createElement("div");
@@ -19,58 +24,52 @@ function addCard(file) {
     }
 
     fileList.appendChild(card);
-
-    const deleteBtn = card.querySelector(".delete-btn");
-    if (deleteBtn) {
-        deleteBtn.addEventListener("click", async () => {
-            const fileId = card.dataset.id;
-            const res = await fetch(`/files/${fileId}`, { method: "DELETE" });
-            const data = await res.json();
-            if (res.ok) {
-                card.remove();
-            } else {
-                alert(data.error);
-            }
-        });
-    }
-
-    const renameBtn = card.querySelector(".rename-btn");
-    if (renameBtn) {
-        renameBtn.addEventListener("click", async () => {
-            const newName = prompt(
-                "Enter new filename:",
-                file.filename
-            );
-            if (!newName) {
-                return;
-            }
-            const res = await fetch(
-                `/files/${file.id}`,
-                {
-                    method: "PATCH",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        filename: newName
-                    })
-                }
-            );
-
-            const data = await res.json();
-            if (res.ok) {
-                const fileLink = card.querySelector(".file-link");
-                fileLink.textContent = data.filename;
-            } else {
-                alert(data.error);
-            }
-        });
-    }
+    addRenameHandler(card, file);
+    addDeleteHandler(card);
 }
 
-let allFiles = [];
-let sortOrder = 'asc';
-let showMyFilesOnly = false;
+// Rename button functionality
+function addRenameHandler(card, file) {
+    const renameBtn = card.querySelector(".rename-btn");
+    if (!renameBtn) return;
+
+    renameBtn.addEventListener("click", async () => {
+        const newName = prompt("Enter new filename:", file.filename);
+        if (!newName) return;
+
+        const res = await fetch(`/files/${file.id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ filename: newName })
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+            file.filename = newName; // keep allFiles in sync
+            card.querySelector(".file-link").textContent = data.filename;
+        } else {
+            alert(data.error);
+        }
+    });
+}
+
+// Delete button functionality
+function addDeleteHandler(card) {
+    const deleteBtn = card.querySelector(".delete-btn");
+    if (!deleteBtn) return;
+
+    deleteBtn.addEventListener("click", async () => {
+        const fileId = card.dataset.id;
+        const res = await fetch(`/files/${fileId}`, { method: "DELETE" });
+        const data = await res.json();
+        if (res.ok) {
+            allFiles = allFiles.filter(f => String(f.id) !== fileId);
+            card.remove();
+        } else {
+            alert(data.error);
+        }
+    });
+}
 
 // Displays files on page load
 async function loadFiles() {
@@ -79,6 +78,8 @@ async function loadFiles() {
     allFiles.forEach(file => addCard(file));
     renderFiles();
 }
+
+loadFiles();
 
 // Sorting logic
 function getFilteredSortedFiles() {
@@ -91,43 +92,32 @@ function getFilteredSortedFiles() {
 
 // Renders the listed files
 function renderFiles() {
-    console.log("renderFiles called, allFiles:", allFiles);
     const fileList = document.getElementById("file-list");
     fileList.innerHTML = "";
     getFilteredSortedFiles().forEach(file => addCard(file));
 }
 
 // Sort button functionality
-function updateSortBtn() {
-    document.getElementById("sortBtn").textContent = sortOrder === 'asc' ? 'A → Z' : 'Z → A';
-}
-
-// Filter button functionality
-function updateFilterBtn() {
-    document.getElementById("filterBtn").textContent = showMyFilesOnly ? 'All Files' : 'My Files';
-}
-
 document.getElementById("sortBtn").addEventListener("click", () => {
     sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
-    updateSortBtn();
+    document.getElementById("sortBtn").textContent = sortOrder === 'asc' ? 'A → Z' : 'Z → A';
     renderFiles();
 });
 
+// Filter button functionality
 document.getElementById("filterBtn").addEventListener("click", () => {
     showMyFilesOnly = !showMyFilesOnly;
-    updateFilterBtn();
+    document.getElementById("filterBtn").textContent = showMyFilesOnly ? 'All Files' : 'My Files';
     renderFiles();
 });
 
-updateSortBtn();
-updateFilterBtn();
-loadFiles();
-
+// Logout button functionality
 document.getElementById("logout").onclick = async function () {
     await fetch('/logout', { method: 'POST' });
     window.location.href = '../index.html';
 };
 
+// Upload button functionality
 document.getElementById("uploadBtn").addEventListener("click", async () => {
     const fileInput = document.getElementById("fileInput");
 
@@ -149,6 +139,7 @@ document.getElementById("uploadBtn").addEventListener("click", async () => {
     if (res.ok) {
         console.log("Upload successful");
         addCard(data.file);
+        allFiles.push(data.file);
     } else {
         alert(data.error);
     }
