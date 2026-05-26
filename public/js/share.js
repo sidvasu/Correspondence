@@ -72,6 +72,14 @@ let allFiles = [];
 let sortOrder = 'asc';
 let showMyFilesOnly = false;
 
+// Displays files on page load
+async function loadFiles() {
+    const res = await fetch('/files');
+    allFiles = await res.json();
+    allFiles.forEach(file => addCard(file));
+    renderFiles();
+}
+
 // Sorting logic
 function getFilteredSortedFiles() {
     const filtered = showMyFilesOnly ? allFiles.filter(f => f.ownedByCurrentUser) : allFiles;
@@ -83,6 +91,7 @@ function getFilteredSortedFiles() {
 
 // Renders the listed files
 function renderFiles() {
+    console.log("renderFiles called, allFiles:", allFiles);
     const fileList = document.getElementById("file-list");
     fileList.innerHTML = "";
     getFilteredSortedFiles().forEach(file => addCard(file));
@@ -96,15 +105,6 @@ function updateSortBtn() {
 // Filter button functionality
 function updateFilterBtn() {
     document.getElementById("filterBtn").textContent = showMyFilesOnly ? 'All Files' : 'My Files';
-}
-
-// Displays files on page load
-async function loadFiles() {
-    const res = await fetch('/files');
-    const files = await res.json();
-    files.forEach(file => addCard(file));
-    allFiles = await res.json();
-    renderFiles();
 }
 
 document.getElementById("sortBtn").addEventListener("click", () => {
