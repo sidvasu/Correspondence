@@ -40,6 +40,10 @@ nav > h1 {
     visibility: hidden;
 }
 
+#confirm {
+    visibility: hidden;
+}
+
 input {
     width: 100%;
     padding: 10px;
@@ -87,11 +91,19 @@ label {
 
 .menu {
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
     border-radius: 4px;
     border: 1px solid #ccc;
     padding: 1em;
+}
+
+.button-menu {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 1em;
 }
 
 #uploadBtn {

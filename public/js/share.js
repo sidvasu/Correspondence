@@ -43,10 +43,12 @@ function addRenameHandler(card, file) {
 
         const data = await res.json();
         if (res.ok) {
+            confirm("Rename successful", true);
             file.filename = newName;
             card.querySelector(".file-link").textContent = data.filename;
         } else {
-            alert(data.error);
+            confirm("Rename failed", false);
+            console.log(data.error);
         }
     });
 }
@@ -61,10 +63,12 @@ function addDeleteHandler(card) {
         const res = await fetch(`/files/${fileId}`, { method: "DELETE" });
         const data = await res.json();
         if (res.ok) {
+            confirm("Delete successful", true);
             allFiles = allFiles.filter(f => String(f.id) !== fileId);
             card.remove();
         } else {
-            alert(data.error);
+            confirm("Delete failed", false);
+            console.log(data.error);
         }
     });
 }
@@ -120,7 +124,7 @@ document.getElementById("uploadBtn").addEventListener("click", async () => {
     const fileInput = document.getElementById("fileInput");
 
     if (fileInput.files.length === 0) {
-        alert("Please select a file");
+        confirm("File not selected", false);
         return;
     }
 
@@ -135,11 +139,20 @@ document.getElementById("uploadBtn").addEventListener("click", async () => {
     const data = await res.json();
 
     if (res.ok) {
-        console.log("Upload successful");
+        confirm("Upload successful", true);
         addCard(data.file);
         allFiles.push(data.file);
         renderFiles();
     } else {
-        alert(data.error);
+        confirm("Upload failed", false);
+        console.log(data.error);
     }
 });
+
+// Confirms action was successful or not
+function confirm(msg, success) {
+    const conf = document.getElementById("confirm");
+    conf.textContent = msg;
+    conf.style.color = success ? "green" : "red";
+    conf.style.visibility = 'visible';
+}
