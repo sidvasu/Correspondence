@@ -6,20 +6,18 @@ let showMyFilesOnly = false;
 function addCard(file) {
     const fileList = document.getElementById("file-list");
     const card = document.createElement("div");
+
     card.classList.add("file-card");
     card.dataset.id = file.id;
+    card.innerHTML = `
+        <p>${file.owner}</p>
+        <a target=" " href="/upload/${file.id}">${file.filename}</a>
+    `;
 
     if (file.ownedByCurrentUser) {
-        card.innerHTML = `
-            <p>${file.owner}</p>
-            <a target=" " href="/upload/${file.id}" class="file-link">${file.filename}</a>
+        card.innerHTML += `
             <button class="rename-btn">✏️</button>
             <button class="delete-btn">🗑️</button>
-        `;
-    } else {
-        card.innerHTML = `
-            <p style="margin-bottom: 0px">${file.owner}</p>
-            <a target=" " href="/upload/${file.id}" class="file-link">${file.filename}</a>
         `;
     }
 
@@ -45,7 +43,7 @@ function addRenameHandler(card, file) {
 
         const data = await res.json();
         if (res.ok) {
-            file.filename = newName; // keep allFiles in sync
+            file.filename = newName;
             card.querySelector(".file-link").textContent = data.filename;
         } else {
             alert(data.error);
@@ -140,6 +138,7 @@ document.getElementById("uploadBtn").addEventListener("click", async () => {
         console.log("Upload successful");
         addCard(data.file);
         allFiles.push(data.file);
+        renderFiles();
     } else {
         alert(data.error);
     }
