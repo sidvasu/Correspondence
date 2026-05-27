@@ -11,7 +11,7 @@ function addCard(file) {
     card.dataset.id = file.id;
     card.innerHTML = `
         <p>${file.owner}</p>
-        <a target=" " href="/upload/${file.id}">${file.filename}</a>
+        <a target=" " class="file-link" href="/upload/${file.id}">${file.filename}</a>
     `;
 
     if (file.ownedByCurrentUser) {
