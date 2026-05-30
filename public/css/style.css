@@ -111,7 +111,7 @@ label {
     margin: 0px;
 }
 
-.rename-btn,.delete-btn {
+.rename-btn,.delete-btn,.download-btn {
     background-color: transparent;
     border: 0px;
 }

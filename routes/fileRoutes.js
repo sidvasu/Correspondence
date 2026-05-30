@@ -4,6 +4,7 @@ import multer from "multer";
 import { Readable } from "stream";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
+import { createWriteStream } from "fs";
 import { getDB, getBucket } from "../config/db.js";
 import { authenticateToken } from "../middleware/auth.js";
 
@@ -58,6 +59,28 @@ router.get("/upload/:fileId", authenticateToken, (req, res) => {
   });
 
   downloadStream.pipe(res);
+});
+
+// Downloads a file to user's file system
+router.get("/files/:fileId", authenticateToken, async (req, res) => {
+  try {
+    const { fileId } = req.params;
+    const db = getDB();
+    const bucket = getBucket();
+
+    const file = await db.collection("uploads.files").findOne({ _id: new ObjectId(fileId) });
+    if (!file) {
+      return res.status(404).json({ error: "File not found" });
+    }
+
+    res.set("Content-Type", file.contentType);
+    res.set("Content-Disposition", `attachment; filename="${file.filename}"`);
+
+    bucket.openDownloadStream(new ObjectId(fileId)).pipe(res);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to download file" });
+  }
 });
 
 // Uploads a file to the database
@@ -138,35 +161,35 @@ router.delete("/files/:id", authenticateToken, async (req, res) => {
 
 // Renames a file
 router.patch("/files/:id", authenticateToken, async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { filename } = req.body;
-        const fileId = new ObjectId(id);
-        const db = getDB();
+  try {
+    const { id } = req.params;
+    const { filename } = req.body;
+    const fileId = new ObjectId(id);
+    const db = getDB();
 
-        if (!filename) {
-            return res.status(400).json({ error: "Filename cannot be empty" });
-        }
-
-        const file = await db.collection("uploads.files").findOne({ _id: fileId });
-
-        if (!file) {
-            return res.status(404).json({ error: "File not found" });
-        }
-
-        if (file.metadata.uploadedBy !== req.user.username) {
-            return res.status(403).json({ error: "Not authorized" });
-        }
-
-        await db.collection("uploads.files").updateOne(
-            { _id: fileId }, { $set: { 'filename': filename } } 
-        );
-
-        res.json({ message: "File renamed successfully", filename });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Failed to delete file" });
+    if (!filename) {
+      return res.status(400).json({ error: "Filename cannot be empty" });
     }
+
+    const file = await db.collection("uploads.files").findOne({ _id: fileId });
+
+    if (!file) {
+      return res.status(404).json({ error: "File not found" });
+    }
+
+    if (file.metadata.uploadedBy !== req.user.username) {
+      return res.status(403).json({ error: "Not authorized" });
+    }
+
+    await db.collection("uploads.files").updateOne(
+      { _id: fileId }, { $set: { 'filename': filename } } 
+    );
+
+    res.json({ message: "File renamed successfully", filename });
+  } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Failed to delete file" });
+  }
 });
 
 export default router;

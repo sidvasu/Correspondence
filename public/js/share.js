@@ -9,9 +9,11 @@ function addCard(file) {
 
     card.classList.add("file-card");
     card.dataset.id = file.id;
+    card.dataset.filename = file.filename;
     card.innerHTML = `
         <p>${file.owner}</p>
         <a target=" " class="file-link" href="/upload/${file.id}">${file.filename}</a>
+        <button class="download-btn">⬇️</button>
     `;
 
     if (file.ownedByCurrentUser) {
@@ -22,8 +24,19 @@ function addCard(file) {
     }
 
     fileList.appendChild(card);
+    addDownloadHandler(card, file);
     addRenameHandler(card, file);
     addDeleteHandler(card);
+}
+
+// Download button functionality
+function addDownloadHandler(card, file) {
+    const downloadBtn = card.querySelector(".download-btn");
+    if (!downloadBtn) return;
+
+    downloadBtn.addEventListener("click", () => {
+        window.location.href = `/files/${file.id}`;
+    });
 }
 
 // Rename button functionality
