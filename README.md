@@ -7,9 +7,11 @@
 ## Build Instructions
 
 After cloning the repository, install all the required npm dependencies
+
 `npm i`
 
 Then run the app and navigate to localhost:3000 on your browser
+
 `node server.js`
 
 To stop the app, use CTRL+C
