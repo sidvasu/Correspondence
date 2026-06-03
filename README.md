@@ -1,5 +1,11 @@
 # Correspondence
 
+Correspondence is a file sharing app, it allows users to upload files and view/download files from other users. 
+
+Web framework: Express.js
+Database: MongoDB + GridFS library
+Authentication: JWT
+
 ## Build Requirements
 - Node.js
 - MongoDB
