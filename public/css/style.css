@@ -1,10 +1,10 @@
 body {
     display: flex;
     flex-direction: column;
+    background-color: #f4c265;
 }
 
 .login-page {
-    background-color: #f4c265;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
@@ -62,7 +62,7 @@ label {
 }
 
 #fileInput {
-    background-color: white;
+    background-color: #f4c265;
     width: auto;
     border: 0px;
     padding: 0px;
@@ -85,12 +85,24 @@ label {
     color: black;
 }
 
+#uploadBtn {
+    background-color: #f7ebdc;
+    color: #000000;
+    border: 1px solid rgba(0, 0, 0);
+}
+
+#filterBtn {
+    background-color: #DFDCF7;
+    border: 1px solid rgba(0, 0, 0);
+}
+
 .file-card {
     display: flex;
     padding: 1em;
     border: 1px solid rgba(0, 0, 0, 0.15);
     border-radius: 4px;
     align-items: center;
+    background-color: #f7ebdc;
 }
 
 .file-card > p {
@@ -108,8 +120,6 @@ label {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    border-radius: 4px;
-    border: 1px solid #ccc;
     padding: 1em;
 }
 
