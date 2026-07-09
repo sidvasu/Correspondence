@@ -52,6 +52,12 @@ router.get("/files", authenticateToken, async (req, res) => {
 router.get("/upload/:fileId", authenticateToken, (req, res) => {
   const { fileId } = req.params;
   const bucket = getBucket();
+  const file = await db.collection("uploads.files").findOne({ _id: new ObjectId(fileId) });
+
+  if (!file.metadata.sharedWith.includes(req.user.username)) {
+    return res.status(403).json({ error: "Not authorized" });
+  }
+
   const downloadStream = bucket.openDownloadStream(new ObjectId(fileId));
 
   downloadStream.on("file", (file) => {
@@ -73,6 +79,10 @@ router.get("/files/:fileId", authenticateToken, async (req, res) => {
       return res.status(404).json({ error: "File not found" });
     }
 
+    if (!file.metadata.sharedWith.includes(req.user.username)) {
+      return res.status(403).json({ error: "Not authorized" });
+    }
+
     res.set("Content-Type", file.contentType);
     res.set("Content-Disposition", `attachment; filename="${file.filename}"`);
 
@@ -92,7 +102,10 @@ router.post("/upload", authenticateToken, upload.single("file"), async (req, res
 
     const uploadStream = bucket.openUploadStream(originalname, {
       contentType: mimetype,
-      metadata: { uploadedBy: req.user.username },
+      metadata: { 
+        uploadedBy: req.user.username,
+        sharedWith: []
+      },
     });
 
     const readBuffer = new Readable();
@@ -118,6 +131,7 @@ router.post("/upload", authenticateToken, upload.single("file"), async (req, res
               filename: uploadedFile.filename,
               owner: uploadedFile.metadata.uploadedBy,
               ownedByCurrentUser: true,
+              accessibleByCurrentUser: true,
               contentType: uploadedFile.contentType,
               uploadDate: uploadedFile.uploadDate,
             },
