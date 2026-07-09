@@ -1,11 +1,19 @@
 // Register button functionality
 document.getElementById("register").onclick = async function () {
+    const registerUsername = document.getElementById('register-username').value;
+    const registerPassword = document.getElementById('register-password').value;
+
+    if (!registerUsername || !registerPassword) {
+        showError("Username and password are required");
+        return;
+    }
+
     const res = await fetch('/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-            username: document.getElementById('register-username').value,
-            password: document.getElementById('register-password').value,
+            username: registerUsername,
+            password: registerPassword,
         })
     });
     
