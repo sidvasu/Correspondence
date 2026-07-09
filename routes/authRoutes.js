@@ -16,6 +16,10 @@ router.post("/register", async (req, res) => {
   try {
     let { username, password } = req.body;
 
+    if (!username || !password) {
+      return res.status(400).json({ error: "Username and password are required" });
+    }
+
     username = username.trim();
     const existing = await users().findOne({ username });
     if (existing) {
