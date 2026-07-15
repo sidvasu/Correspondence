@@ -24,9 +24,10 @@ body {
 }
 
 nav {
-    display: flex;
+    display: grid;
     padding: 1em;
     box-shadow: 0 2px 4px rgb(0, 0, 0, 0.1);
+    grid-template-columns: 1fr auto 1fr;
 }
 
 h1 {
@@ -34,7 +35,8 @@ h1 {
 }
 
 nav > h1 {
-    margin: auto;
+    grid-column: 2;
+    justify-self: center;
 }
 
 .error {
@@ -61,6 +63,13 @@ label {
     font-weight: bold;
 }
 
+#logout {
+    grid-column: 3;
+    justify-self: end;
+    width: 2em;
+    height: 2em;
+}
+
 #fileInput {
     background-color: #f4c265;
     width: auto;
@@ -68,8 +77,6 @@ label {
     padding: 0px;
     margin: 0px;
     field-sizing: content;
-    margin-left: 2em;
-    margin-right: 2em;
 }
 
 label {
@@ -85,14 +92,14 @@ label {
     color: black;
 }
 
-#uploadBtn {
-    background-color: #f7ebdc;
+#sortBtn {
+    background-color: #DFDCF7;
     color: #000000;
     border: 1px solid rgba(0, 0, 0);
 }
 
 #filterBtn {
-    background-color: #DFDCF7;
+    background-color: #f7ebdc;
     border: 1px solid rgba(0, 0, 0);
 }
 
@@ -125,9 +132,10 @@ label {
 
 .button-menu {
     display: flex;
-    flex-direction: row;
+    flex-direction: space-between;
     align-items: center;
-    margin-bottom: 1em;
+    margin-bottom: 2em;
+    gap: 3em;
 }
 
 #uploadBtn {
