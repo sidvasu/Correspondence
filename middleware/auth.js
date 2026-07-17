@@ -5,8 +5,7 @@ const AUTH_COOKIE_NAME = "authToken";
 export const COOKIE_MAX_AGE_MS = 60 * 60 * 1000;
 export const COOKIE_MAX_AGE_SECONDS = COOKIE_MAX_AGE_MS / 1000;
 
-export const JWT_SECRET =
-  process.env.JWT_SECRET || "cpsc431-final-project-development-secret-key";
+export const JWT_SECRET = process.env.JWT_SECRET || "cpsc431-final-project-development-secret-key";
 
 export function parseCookies(req) {
   const header = req.headers.cookie;
