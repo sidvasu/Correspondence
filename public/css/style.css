@@ -4,58 +4,8 @@ body {
     background-color: #f4c265;
 }
 
-#scroll-container {
-    margin-top: 3em;
-    display: flex;
-    justify-content: center;
-    max-height: 50vh;
-    overflow-y: auto;
-}
-
-.login-page {
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-}
-
-.login-form {
-    display: flex;
-    flex-direction: column;
-}
-
-.login-box {
-    background-color: #f7ebdc;
-    padding: 3em;
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
-    border: 1px solid rgba(0, 0, 0, 0.15);
-    border-radius: 4px;
-}
-
-nav {
-    display: grid;
-    padding: 1em;
-    box-shadow: 0 2px 4px rgb(0, 0, 0, 0.1);
-    grid-template-columns: 1fr auto 1fr;
-}
-
 h1 {
     font-weight: bold;
-}
-
-nav > h1 {
-    grid-column: 2;
-    justify-self: center;
-}
-
-.error {
-    color: red; 
-    visibility: hidden;
-    margin-top: 1em;
-    margin-bottom: 0em;
-}
-
-#confirm {
-    visibility: hidden;
 }
 
 input {
@@ -69,103 +19,12 @@ input {
 
 label {
     font-weight: bold;
-}
-
-#logout {
-    grid-column: 3;
-    justify-self: end;
-    width: 2em;
-    height: 2em;
-}
-
-#fileInput {
-    background-color: #f4c265;
-    width: auto;
-    border: 0px;
-    padding: 0px;
-    margin: 0px;
-    field-sizing: content;
-}
-
-label {
     margin-right: auto;
 }
 
-#login, #register {
+.error {
+    color: red; 
+    visibility: hidden;
     margin-top: 1em;
-    margin-bottom: 1em;
-}
-
-.login-box > a {
-    color: black;
-}
-
-#sortBtn {
-    background-color: #DFDCF7;
-    color: #000000;
-    border: 1px solid rgba(0, 0, 0);
-}
-
-#filterBtn {
-    background-color: #f7ebdc;
-    border: 1px solid rgba(0, 0, 0);
-}
-
-#file-list {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 50%;
-}
-
-.file-card {
-    display: flex;
-    padding: 1em;
-    border: 1px solid rgba(0, 0, 0, 0.15);
-    border-radius: 4px;
-    align-items: center;
-    background-color: #f7ebdc;
-    width: 100%;
-}
-
-.file-card > p {
-    margin: 0em;
-    margin-right: 1em;
-    align-self: center;
-}
-
-.file-card > a {
-    margin-right: 1em;
-}
-
-.menu {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    padding: 1em;
-}
-
-.button-menu {
-    display: flex;
-    flex-direction: space-between;
-    align-items: center;
-    margin-bottom: 2em;
-    gap: 3em;
-}
-
-#uploadBtn {
-    height: 50%;
-    margin: 0px;
-}
-
-.rename-btn,.delete-btn,.download-btn {
-    background-color: transparent;
-    border: 0px;
-}
-
-@media (max-width: 600px) {
-    #file-list {
-        width: 100%;
-    }
+    margin-bottom: 0em;
 }
