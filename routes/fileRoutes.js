@@ -20,11 +20,17 @@ router.get("/files", authenticateToken, async (req, res) => {
       .sort({ uploadDate: -1 })
       .toArray();
 
-    const formatted = files.map((file) => ({
+
+      const accessibleFiles = files.filter(
+        (file) => file.metadata.uploadedBy === req.user.username || file.metadata.sharedWith.includes(req.user.username)
+      );
+
+    const formatted = accessibleFiles.map((file) => ({
       id: file._id,
       filename: file.filename,
       owner: file.metadata.uploadedBy,
       ownedByCurrentUser: file.metadata?.uploadedBy === req.user.username,
+      accessibleBy: file.metadata?.sharedWith || [],
       length: file.length,
       uploadDate: file.uploadDate,
       contentType: file.contentType,
@@ -47,9 +53,8 @@ router.post("/upload", authenticateToken, upload.single("file"), async (req, res
     const uploadStream = bucket.openUploadStream(originalname, {
       contentType: mimetype,
       metadata: { 
-        uploadedBy: req.user.username/*,
+        uploadedBy: req.user.username,
         sharedWith: []
-        */
       },
     });
 
@@ -76,7 +81,7 @@ router.post("/upload", authenticateToken, upload.single("file"), async (req, res
               filename: uploadedFile.filename,
               owner: uploadedFile.metadata.uploadedBy,
               ownedByCurrentUser: true,
-              //accessibleByCurrentUser: true,
+              accessibleBy: uploadedFile.metadata?.sharedWith || [],
               contentType: uploadedFile.contentType,
               uploadDate: uploadedFile.uploadDate,
             },

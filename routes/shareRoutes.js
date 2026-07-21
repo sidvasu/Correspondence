@@ -28,11 +28,9 @@ router.get("/upload/:fileId", authenticateToken, async (req, res) => {
       return res.status(404).json({ error: "File not found" });
     }
 
-    /*
-    if (!file.metadata.sharedWith.includes(req.user.username)) {
+    if (file.metadata.uploadedBy !== req.user.username && !file.metadata.sharedWith.includes(req.user.username)) {
       return res.status(403).json({ error: "Not authorized" });
     }
-    */
 
     const downloadStream = bucket.openDownloadStream(new ObjectId(fileId));
     downloadStream.on("file", (f) => res.set("Content-Type", f.contentType));
@@ -55,11 +53,9 @@ router.get("/files/:fileId", authenticateToken, async (req, res) => {
       return res.status(404).json({ error: "File not found" });
     }
 
-    /*
-    if (!file.metadata.sharedWith.includes(req.user.username)) {
+    if (file.metadata.uploadedBy !== req.user.username && !file.metadata.sharedWith.includes(req.user.username)) {
       return res.status(403).json({ error: "Not authorized" });
     }
-    */
 
     res.set("Content-Type", file.contentType);
     res.set("Content-Disposition", `attachment; filename="${file.filename}"`);
