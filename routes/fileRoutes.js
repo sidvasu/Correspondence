@@ -20,7 +20,6 @@ router.get("/files", authenticateToken, async (req, res) => {
       .sort({ uploadDate: -1 })
       .toArray();
 
-
       const accessibleFiles = files.filter(
         (file) => file.metadata.uploadedBy === req.user.username || file.metadata.sharedWith.includes(req.user.username)
       );
@@ -153,6 +152,50 @@ router.patch("/files/:id", authenticateToken, async (req, res) => {
   } catch (error) {
       console.error(error);
       res.status(500).json({ error: "Failed to delete file" });
+  }
+});
+
+// Shares a file with another user
+router.patch("/files/:id/share", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { username } = req.body;
+    const fileId = new ObjectId(id);
+    const db = getDB();
+
+    if (!username) {
+      return res.status(400).json({ error: "Username cannot be empty" });
+    }
+
+    const userExists = await db.collection("users").findOne({ username });
+    if (!userExists) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const file = await db.collection("uploads.files").findOne({ _id: fileId });
+
+    if (!file) {
+      return res.status(404).json({ error: "File not found" });
+    }
+
+    if (file.metadata.uploadedBy !== req.user.username) {
+      return res.status(403).json({ error: "Not authorized" });
+    }
+
+    if (file.metadata.sharedWith.includes(username)) {
+      return res.status(400).json({ error: "File already shared with this user" });
+    }
+
+    await db.collection("uploads.files").updateOne(
+      { _id: fileId },
+      { $push: { 'metadata.sharedWith': username } }
+    );
+
+    res.json({ message: "File shared successfully", sharedWith: [...file.metadata.sharedWith, username] });   
+  }
+  catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to share file" });
   }
 });
 
