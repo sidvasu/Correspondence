@@ -46,7 +46,7 @@ h1 {
     gap: 3em;
 }
 
-.rename-btn,.delete-btn,.download-btn {
+.rename-btn,.delete-btn,.download-btn,.share-btn {
     background-color: transparent;
     border: 0px;
 }

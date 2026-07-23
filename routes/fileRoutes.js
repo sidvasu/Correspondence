@@ -2,24 +2,13 @@ import { Router } from "express";
 import { ObjectId } from "mongodb";
 import multer from "multer";
 import { Readable } from "stream";
-import { join, dirname } from "path";
-import { fileURLToPath } from "url";
-import { createWriteStream } from "fs";
 import { getDB, getBucket } from "../config/db.js";
 import { authenticateToken } from "../middleware/auth.js";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 const router = Router();
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
-
-// Loads the share page
-router.get("/share.html", authenticateToken, (req, res) => {
-  res.sendFile(join(__dirname, "../public", "share.html"));
-});
 
 // Gets the files from the database
 router.get("/files", authenticateToken, async (req, res) => {
@@ -31,11 +20,16 @@ router.get("/files", authenticateToken, async (req, res) => {
       .sort({ uploadDate: -1 })
       .toArray();
 
-    const formatted = files.map((file) => ({
+      const accessibleFiles = files.filter(
+        (file) => file.metadata.uploadedBy === req.user.username || file.metadata.sharedWith.includes(req.user.username)
+      );
+
+    const formatted = accessibleFiles.map((file) => ({
       id: file._id,
       filename: file.filename,
       owner: file.metadata.uploadedBy,
       ownedByCurrentUser: file.metadata?.uploadedBy === req.user.username,
+      accessibleBy: file.metadata?.sharedWith || [],
       length: file.length,
       uploadDate: file.uploadDate,
       contentType: file.contentType,
@@ -48,41 +42,6 @@ router.get("/files", authenticateToken, async (req, res) => {
   }
 });
 
-// Displays a specific file to the user
-router.get("/upload/:fileId", authenticateToken, (req, res) => {
-  const { fileId } = req.params;
-  const bucket = getBucket();
-  const downloadStream = bucket.openDownloadStream(new ObjectId(fileId));
-
-  downloadStream.on("file", (file) => {
-    res.set("Content-Type", file.contentType);
-  });
-
-  downloadStream.pipe(res);
-});
-
-// Downloads a file to user's file system
-router.get("/files/:fileId", authenticateToken, async (req, res) => {
-  try {
-    const { fileId } = req.params;
-    const db = getDB();
-    const bucket = getBucket();
-
-    const file = await db.collection("uploads.files").findOne({ _id: new ObjectId(fileId) });
-    if (!file) {
-      return res.status(404).json({ error: "File not found" });
-    }
-
-    res.set("Content-Type", file.contentType);
-    res.set("Content-Disposition", `attachment; filename="${file.filename}"`);
-
-    bucket.openDownloadStream(new ObjectId(fileId)).pipe(res);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Failed to download file" });
-  }
-});
-
 // Uploads a file to the database
 router.post("/upload", authenticateToken, upload.single("file"), async (req, res) => {
   try {
@@ -92,7 +51,10 @@ router.post("/upload", authenticateToken, upload.single("file"), async (req, res
 
     const uploadStream = bucket.openUploadStream(originalname, {
       contentType: mimetype,
-      metadata: { uploadedBy: req.user.username },
+      metadata: { 
+        uploadedBy: req.user.username,
+        sharedWith: []
+      },
     });
 
     const readBuffer = new Readable();
@@ -118,6 +80,7 @@ router.post("/upload", authenticateToken, upload.single("file"), async (req, res
               filename: uploadedFile.filename,
               owner: uploadedFile.metadata.uploadedBy,
               ownedByCurrentUser: true,
+              accessibleBy: uploadedFile.metadata?.sharedWith || [],
               contentType: uploadedFile.contentType,
               uploadDate: uploadedFile.uploadDate,
             },
@@ -189,6 +152,50 @@ router.patch("/files/:id", authenticateToken, async (req, res) => {
   } catch (error) {
       console.error(error);
       res.status(500).json({ error: "Failed to delete file" });
+  }
+});
+
+// Shares a file with another user
+router.patch("/files/:id/share", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { username } = req.body;
+    const fileId = new ObjectId(id);
+    const db = getDB();
+
+    if (!username) {
+      return res.status(400).json({ error: "Username cannot be empty" });
+    }
+
+    const userExists = await db.collection("users").findOne({ username });
+    if (!userExists) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const file = await db.collection("uploads.files").findOne({ _id: fileId });
+
+    if (!file) {
+      return res.status(404).json({ error: "File not found" });
+    }
+
+    if (file.metadata.uploadedBy !== req.user.username) {
+      return res.status(403).json({ error: "Not authorized" });
+    }
+
+    if (file.metadata.uploadedBy === username || file.metadata.sharedWith.includes(username)) {
+      return res.status(400).json({ error: "File already shared with this user" });
+    }
+
+    await db.collection("uploads.files").updateOne(
+      { _id: fileId },
+      { $push: { 'metadata.sharedWith': username } }
+    );
+
+    res.json({ message: "File shared successfully", sharedWith: [...file.metadata.sharedWith, username] });   
+  }
+  catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to share file" });
   }
 });
 

@@ -8,6 +8,7 @@ import { fileURLToPath } from "url";
 import { connectDB } from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import fileRoutes from "./routes/fileRoutes.js";
+import shareRoutes from "./routes/shareRoutes.js";
  
 const app = express();
  
@@ -21,6 +22,7 @@ await connectDB();
  
 app.use(authRoutes);
 app.use(fileRoutes);
+app.use(shareRoutes);
  
 app.get("/", (req, res) => {
   res.sendFile(join(__dirname, "public", "index.html"));
