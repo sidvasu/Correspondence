@@ -20,6 +20,7 @@ function addCard(file) {
         card.innerHTML += `
             <button class="rename-btn">✏️</button>
             <button class="delete-btn">🗑️</button>
+            <button class="share-btn">🔁</button>
         `;
     }
 
@@ -27,6 +28,7 @@ function addCard(file) {
     addDownloadHandler(card, file);
     addRenameHandler(card, file);
     addDeleteHandler(card);
+    addShareHandler(card, file);
 }
 
 // Download button functionality
@@ -81,6 +83,31 @@ function addDeleteHandler(card) {
             card.remove();
         } else {
             confirm("Delete failed", false);
+            console.log(data.error);
+        }
+    });
+}
+
+// Share button functionality
+function addShareHandler(card, file) {
+    const shareBtn = card.querySelector(".share-btn");
+    if (!shareBtn) return;
+
+    shareBtn.addEventListener("click", async () => {
+        const user = prompt("Enter user to share with:");
+        if (!user) return;
+
+        const res = await fetch(`/files/${file.id}/share`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username: user })
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+            confirm("Share successful", true);
+        } else {
+            confirm("Share failed", false);
             console.log(data.error);
         }
     });

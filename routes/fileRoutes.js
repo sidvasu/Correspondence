@@ -182,7 +182,7 @@ router.patch("/files/:id/share", authenticateToken, async (req, res) => {
       return res.status(403).json({ error: "Not authorized" });
     }
 
-    if (file.metadata.sharedWith.includes(username)) {
+    if (file.metadata.uploadedBy === username || file.metadata.sharedWith.includes(username)) {
       return res.status(400).json({ error: "File already shared with this user" });
     }
 
