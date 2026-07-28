@@ -46,6 +46,12 @@ router.get("/files", authenticateToken, async (req, res) => {
 router.post("/upload", authenticateToken, upload.single("file"), async (req, res) => {
   try {
     const { originalname, mimetype, buffer } = req.file;
+
+    const MAX_BYTES = 10 * 1024 * 1024;
+    if (buffer.length > MAX_BYTES) {
+      return res.status(400).json({ error: "File too large" });
+    }
+
     const db = getDB();
     const bucket = getBucket();
 

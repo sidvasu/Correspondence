@@ -20,7 +20,10 @@ router.post("/register", async (req, res) => {
       return res.status(400).json({ error: "Username and password are required" });
     }
 
-    username = username.trim();
+    if (username.length > 50 || password.length > 50) {
+      return res.status(400).json({ error: "Username and password must be 50 characters or fewer" });
+    }
+    
     const existing = await users().findOne({ username });
     if (existing) {
       return res.status(409).json({ error: "Username already taken" });
